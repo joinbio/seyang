@@ -164,6 +164,12 @@ export default function TeamPage() {
         <div className="flex items-baseline justify-between mt-2 flex-wrap gap-2">
           <h1 className="text-xl md:text-2xl font-medium">{team.name}</h1>
           <div className="flex items-center gap-2 flex-wrap">
+            <Link
+              href={`/team/${teamCode}/dashboard`}
+              className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              📊 대시보드
+            </Link>
             <button
               onClick={handleQuickDownload}
               disabled={downloading}
