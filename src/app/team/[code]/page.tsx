@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase, type Team, type Wig, type MetricDef, type DailyEntry } from '@/lib/supabase';
 import { getMonday, getWeekDates, formatDateISO, formatDateShort, formatWeekRange, WEEKDAY_KOR } from '@/lib/date-utils';
+import { exportTeamData } from '@/lib/excel-export';
 import Link from 'next/link';
 
 export default function TeamPage() {
@@ -17,6 +18,7 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>('');
+  const [downloading, setDownloading] = useState(false);
 
   const today = new Date();
   const [weekOffset, setWeekOffset] = useState(0);
@@ -112,6 +114,18 @@ export default function TeamPage() {
     }
   }
 
+  async function handleQuickDownload() {
+    setDownloading(true);
+    try {
+      await exportTeamData(teamCode, { range: 'month' });
+      setSaveStatus('✅ 이번 달 데이터 다운로드 완료');
+    } catch (e: any) {
+      setSaveStatus('⚠️ ' + e.message);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   function calculateAvg(metricId: string): number | null {
     const dayMap = entries[metricId] || {};
     const values = Object.values(dayMap).filter((v): v is number => v !== null && !isNaN(v as number));
@@ -149,7 +163,15 @@ export default function TeamPage() {
         <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">← 팀 선택</Link>
         <div className="flex items-baseline justify-between mt-2 flex-wrap gap-2">
           <h1 className="text-xl md:text-2xl font-medium">{team.name}</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleQuickDownload}
+              disabled={downloading}
+              className="text-xs px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded hover:bg-blue-100 disabled:opacity-50"
+              title="이번 달 데이터를 엑셀로 다운로드"
+            >
+              {downloading ? '다운로드 중...' : '📥 엑셀'}
+            </button>
             <Link
               href={`/team/${teamCode}/manage`}
               className="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 hover:border-gray-400"

@@ -70,7 +70,8 @@ export default function HomePage() {
           <h1 className="text-2xl font-medium text-gray-900">조인그룹 가중목 시스템</h1>
           <p className="text-sm text-gray-500 mt-1">세양 안성공장 · 9개 팀</p>
         </div>
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-3 text-xs flex-wrap">
+          <Link href="/admin/export" className="text-blue-600 hover:text-blue-800 font-medium">📥 엑셀 다운로드</Link>
           <Link href="/admin/users" className="text-gray-600 hover:text-gray-900 underline">사용자 관리</Link>
           <Link href="/admin/history" className="text-gray-600 hover:text-gray-900 underline">변경 이력</Link>
         </div>
@@ -97,7 +98,7 @@ export default function HomePage() {
       </section>
 
       <footer className="mt-12 text-center text-xs text-gray-400">
-        v0.2 · 2026.04 · Powered by Next.js + Supabase
+        v0.3 · 2026.04 · Powered by Next.js + Supabase
       </footer>
     </main>
   );

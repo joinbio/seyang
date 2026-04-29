@@ -187,6 +187,7 @@ export default function ManagePage() {
         <div className="flex items-baseline justify-between flex-wrap gap-2">
           <h1 className="text-xl md:text-2xl font-medium">{team.name} 가중목 관리</h1>
           <div className="flex items-center gap-3">
+            <Link href="/admin/export" className="text-xs text-blue-600 hover:text-blue-800 font-medium">📥 엑셀</Link>
             <Link href="/admin/users" className="text-xs text-gray-600 hover:text-gray-900 underline">사용자 관리</Link>
             <Link href="/admin/history" className="text-xs text-gray-600 hover:text-gray-900 underline">전체 이력</Link>
             <div className="text-xs text-gray-500 min-h-[1rem]">{saveStatus}</div>
