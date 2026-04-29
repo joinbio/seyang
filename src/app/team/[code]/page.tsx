@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase, type Team, type Wig, type MetricDef, type DailyEntry } from '@/lib/supabase';
 import { getMonday, getWeekDates, formatDateISO, formatDateShort, formatWeekRange, WEEKDAY_KOR } from '@/lib/date-utils';
@@ -19,6 +19,8 @@ export default function TeamPage() {
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [downloading, setDownloading] = useState(false);
+
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const today = new Date();
   const [weekOffset, setWeekOffset] = useState(0);
@@ -111,6 +113,88 @@ export default function TeamPage() {
       setSaveStatus(`저장됨 ${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`);
     } catch (e: any) {
       setSaveStatus('⚠️ 저장 실패: ' + e.message);
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>, metricIdx: number, dateIdx: number) {
+    const totalMetrics = metrics.length;
+    const totalDates = weekDates.length;
+
+    let nextMetricIdx = metricIdx;
+    let nextDateIdx = dateIdx;
+    let shouldMove = false;
+
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextMetricIdx = metricIdx + 1;
+      if (nextMetricIdx >= totalMetrics) {
+        nextMetricIdx = 0;
+        nextDateIdx = dateIdx + 1;
+        if (nextDateIdx >= totalDates) nextDateIdx = 0;
+      }
+      shouldMove = true;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextMetricIdx = metricIdx - 1;
+      if (nextMetricIdx < 0) {
+        nextMetricIdx = totalMetrics - 1;
+        nextDateIdx = dateIdx - 1;
+        if (nextDateIdx < 0) nextDateIdx = totalDates - 1;
+      }
+      shouldMove = true;
+    } else if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      nextDateIdx = dateIdx + 1;
+      if (nextDateIdx >= totalDates) {
+        nextDateIdx = 0;
+        nextMetricIdx = metricIdx + 1;
+        if (nextMetricIdx >= totalMetrics) nextMetricIdx = 0;
+      }
+      shouldMove = true;
+    } else if (e.key === 'Tab' && e.shiftKey) {
+      e.preventDefault();
+      nextDateIdx = dateIdx - 1;
+      if (nextDateIdx < 0) {
+        nextDateIdx = totalDates - 1;
+        nextMetricIdx = metricIdx - 1;
+        if (nextMetricIdx < 0) nextMetricIdx = totalMetrics - 1;
+      }
+      shouldMove = true;
+    } else if (e.key === 'ArrowRight') {
+      const target = e.currentTarget;
+      const cursorAtEnd = target.selectionStart === (target.value?.length ?? 0);
+      if (!cursorAtEnd) return;
+      e.preventDefault();
+      nextDateIdx = dateIdx + 1;
+      if (nextDateIdx >= totalDates) {
+        nextDateIdx = 0;
+        nextMetricIdx = metricIdx + 1;
+        if (nextMetricIdx >= totalMetrics) nextMetricIdx = 0;
+      }
+      shouldMove = true;
+    } else if (e.key === 'ArrowLeft') {
+      const target = e.currentTarget;
+      const cursorAtStart = target.selectionStart === 0;
+      if (!cursorAtStart) return;
+      e.preventDefault();
+      nextDateIdx = dateIdx - 1;
+      if (nextDateIdx < 0) {
+        nextDateIdx = totalDates - 1;
+        nextMetricIdx = metricIdx - 1;
+        if (nextMetricIdx < 0) nextMetricIdx = totalMetrics - 1;
+      }
+      shouldMove = true;
+    }
+
+    if (shouldMove) {
+      const nextMetric = metrics[nextMetricIdx];
+      const nextDate = formatDateISO(weekDates[nextDateIdx]);
+      const key = `${nextMetric.id}_${nextDate}`;
+      const nextInput = inputRefs.current[key];
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
     }
   }
 
@@ -247,7 +331,7 @@ export default function TeamPage() {
               </tr>
             </thead>
             <tbody>
-              {metrics.map((m) => {
+              {metrics.map((m, metricIdx) => {
                 const avg = calculateAvg(m.id);
                 const avgMet = isMet(m, avg);
                 const indicatorIcon = m.indicator_type === 'lead' ? '🎯' : m.indicator_type === 'lag' ? '📊' : '';
@@ -260,19 +344,23 @@ export default function TeamPage() {
                     <td className="py-2 px-1 text-center text-xs text-gray-500">
                       {m.target_value}{m.direction === 'le' ? '↓' : '↑'}
                     </td>
-                    {weekDates.map((d) => {
+                    {weekDates.map((d, dateIdx) => {
                       const dateStr = formatDateISO(d);
                       const v = entries[m.id]?.[dateStr] ?? null;
                       const met = isMet(m, v);
                       const bgClass = met === null ? '' : met ? 'bg-green-50' : 'bg-red-50';
+                      const refKey = `${m.id}_${dateStr}`;
                       return (
                         <td key={dateStr} className="py-1 px-1">
                           <input
+                            ref={(el) => { inputRefs.current[refKey] = el; }}
                             type="number"
                             inputMode="decimal"
                             step="0.1"
                             value={v ?? ''}
                             onChange={(e) => handleChange(m.id, dateStr, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, metricIdx, dateIdx)}
+                            onFocus={(e) => e.target.select()}
                             className={`w-full text-center text-xs md:text-sm py-1 px-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 ${bgClass}`}
                             placeholder="-"
                           />
@@ -292,8 +380,14 @@ export default function TeamPage() {
         </div>
       )}
 
-      <div className="mt-3 text-xs text-gray-400">
-        🎯 선행지표 / 📊 후행지표 — 입력하면 즉시 자동 저장됩니다
+      <div className="mt-3 text-xs text-gray-400 space-y-1">
+        <div>🎯 선행지표 / 📊 후행지표 — 입력하면 즉시 자동 저장됩니다</div>
+        <div>
+          ⌨️ 키보드 단축키: <span className="text-gray-600">Enter / ↓ = 아래 칸</span> · 
+          <span className="text-gray-600 ml-1">↑ = 위 칸</span> · 
+          <span className="text-gray-600 ml-1">Tab / → = 다음 날짜</span> · 
+          <span className="text-gray-600 ml-1">Shift+Tab / ← = 이전 날짜</span>
+        </div>
       </div>
     </main>
   );
