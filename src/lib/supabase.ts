@@ -59,9 +59,37 @@ export type Practice = {
   owner_user_id: string | null;
 };
 
+export type UserRole = 'part_leader' | 'team_leader' | 'plant_manager' | 'group_executive' | 'admin';
+
 export type User = {
   id: string;
   email: string;
   name: string;
+  role: UserRole;
   team_id: string | null;
+  factory_id: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type ChangeLogEntry = {
+  id: string;
+  user_id: string | null;
+  entity_type: string;
+  entity_id: string;
+  entity_label: string | null;
+  team_id: string | null;
+  action: string;
+  before_value: any;
+  after_value: any;
+  reason: string | null;
+  created_at: string;
+};
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  part_leader: '파트장/라인장',
+  team_leader: '팀장',
+  plant_manager: '공장장',
+  group_executive: '그룹 임원',
+  admin: '시스템 관리자',
 };

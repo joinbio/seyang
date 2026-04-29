@@ -58,9 +58,6 @@ export default function HomePage() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
           <div className="font-medium mb-2">데이터베이스 연결 오류</div>
           <div className="text-sm">{error}</div>
-          <div className="text-xs mt-3 text-red-600">
-            Supabase URL과 키가 환경변수에 제대로 설정되었는지 확인해주세요.
-          </div>
         </div>
       </main>
     );
@@ -68,9 +65,15 @@ export default function HomePage() {
 
   return (
     <main className="max-w-3xl mx-auto p-4 md:p-8">
-      <header className="mb-6">
-        <h1 className="text-2xl font-medium text-gray-900">조인그룹 가중목 시스템</h1>
-        <p className="text-sm text-gray-500 mt-1">세양 안성공장 · 9개 팀</p>
+      <header className="mb-6 flex items-baseline justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-medium text-gray-900">조인그룹 가중목 시스템</h1>
+          <p className="text-sm text-gray-500 mt-1">세양 안성공장 · 9개 팀</p>
+        </div>
+        <div className="flex items-center gap-3 text-xs">
+          <Link href="/admin/users" className="text-gray-600 hover:text-gray-900 underline">사용자 관리</Link>
+          <Link href="/admin/history" className="text-gray-600 hover:text-gray-900 underline">변경 이력</Link>
+        </div>
       </header>
 
       <section>
@@ -94,7 +97,7 @@ export default function HomePage() {
       </section>
 
       <footer className="mt-12 text-center text-xs text-gray-400">
-        v0.1 · 2026.04 · Powered by Next.js + Supabase
+        v0.2 · 2026.04 · Powered by Next.js + Supabase
       </footer>
     </main>
   );
