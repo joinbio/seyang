@@ -22,8 +22,11 @@ export type Wig = {
   unit: string;
   direction: 'ge' | 'le';
   deadline: string | null;
+  deadline_label: string | null;
   is_active: boolean;
 };
+
+export type IndicatorType = 'lead' | 'lag' | 'general';
 
 export type MetricDef = {
   id: string;
@@ -33,8 +36,10 @@ export type MetricDef = {
   target_value: number;
   direction: 'ge' | 'le';
   is_lead_indicator: boolean;
+  indicator_type: IndicatorType;
   sort_order: number;
   is_active: boolean;
+  owner_user_id: string | null;
 };
 
 export type DailyEntry = {
@@ -51,4 +56,12 @@ export type Practice = {
   week_key: string;
   is_completed: boolean;
   sort_order: number;
+  owner_user_id: string | null;
+};
+
+export type User = {
+  id: string;
+  email: string;
+  name: string;
+  team_id: string | null;
 };

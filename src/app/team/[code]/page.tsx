@@ -149,7 +149,15 @@ export default function TeamPage() {
         <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">← 팀 선택</Link>
         <div className="flex items-baseline justify-between mt-2 flex-wrap gap-2">
           <h1 className="text-xl md:text-2xl font-medium">{team.name}</h1>
-          <div className="text-xs text-gray-500">{saveStatus || '\u00A0'}</div>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/team/${teamCode}/manage`}
+              className="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 hover:border-gray-400"
+            >
+              ⚙️ 관리
+            </Link>
+            <div className="text-xs text-gray-500">{saveStatus || '\u00A0'}</div>
+          </div>
         </div>
         {wig && (
           <div className="mt-2 bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
@@ -184,67 +192,80 @@ export default function TeamPage() {
         )}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200 text-xs text-gray-500">
-              <th className="text-left py-2 pr-2 font-medium" style={{ minWidth: 130 }}>항목</th>
-              <th className="text-center py-2 px-1 font-medium" style={{ minWidth: 50 }}>목표</th>
-              {weekDates.map((d, i) => (
-                <th key={i} className="text-center py-2 px-1 font-medium" style={{ minWidth: 60 }}>
-                  <div>{formatDateShort(d)}</div>
-                  <div className="text-gray-400">{WEEKDAY_KOR[i]}</div>
-                </th>
-              ))}
-              <th className="text-center py-2 px-1 font-medium" style={{ minWidth: 60 }}>평균</th>
-            </tr>
-          </thead>
-          <tbody>
-            {metrics.map((m) => {
-              const avg = calculateAvg(m.id);
-              const avgMet = isMet(m, avg);
-              return (
-                <tr key={m.id} className="border-b border-gray-100">
-                  <td className="py-2 pr-2 font-medium text-gray-800 text-xs md:text-sm">
-                    {m.name}
-                    {m.is_lead_indicator && <span className="ml-1 text-blue-500 text-xs">●</span>}
-                  </td>
-                  <td className="py-2 px-1 text-center text-xs text-gray-500">
-                    {m.target_value}{m.direction === 'le' ? '↓' : '↑'}
-                  </td>
-                  {weekDates.map((d) => {
-                    const dateStr = formatDateISO(d);
-                    const v = entries[m.id]?.[dateStr] ?? null;
-                    const met = isMet(m, v);
-                    const bgClass = met === null ? '' : met ? 'bg-green-50' : 'bg-red-50';
-                    return (
-                      <td key={dateStr} className="py-1 px-1">
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          step="0.1"
-                          value={v ?? ''}
-                          onChange={(e) => handleChange(m.id, dateStr, e.target.value)}
-                          className={`w-full text-center text-xs md:text-sm py-1 px-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 ${bgClass}`}
-                          placeholder="-"
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className={`py-2 px-1 text-center text-xs md:text-sm font-medium ${
-                    avgMet === null ? 'text-gray-400' : avgMet ? 'text-green-700' : 'text-red-700'
-                  }`}>
-                    {avg === null ? '-' : avg.toFixed(m.target_value >= 1000 ? 0 : 1)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {metrics.length === 0 ? (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-center">
+          <div className="text-sm text-amber-900 mb-2">아직 측정항목이 등록되지 않았습니다</div>
+          <Link
+            href={`/team/${teamCode}/manage`}
+            className="inline-block text-sm px-4 py-2 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-900 rounded"
+          >
+            관리 화면에서 측정항목 추가하기 →
+          </Link>
+        </div>
+      ) : (
+        <div className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-xs text-gray-500">
+                <th className="text-left py-2 pr-2 font-medium" style={{ minWidth: 130 }}>항목</th>
+                <th className="text-center py-2 px-1 font-medium" style={{ minWidth: 50 }}>목표</th>
+                {weekDates.map((d, i) => (
+                  <th key={i} className="text-center py-2 px-1 font-medium" style={{ minWidth: 60 }}>
+                    <div>{formatDateShort(d)}</div>
+                    <div className="text-gray-400">{WEEKDAY_KOR[i]}</div>
+                  </th>
+                ))}
+                <th className="text-center py-2 px-1 font-medium" style={{ minWidth: 60 }}>평균</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metrics.map((m) => {
+                const avg = calculateAvg(m.id);
+                const avgMet = isMet(m, avg);
+                const indicatorIcon = m.indicator_type === 'lead' ? '🎯' : m.indicator_type === 'lag' ? '📊' : '';
+                return (
+                  <tr key={m.id} className="border-b border-gray-100">
+                    <td className="py-2 pr-2 font-medium text-gray-800 text-xs md:text-sm">
+                      <span className="text-xs mr-1">{indicatorIcon}</span>
+                      {m.name}
+                    </td>
+                    <td className="py-2 px-1 text-center text-xs text-gray-500">
+                      {m.target_value}{m.direction === 'le' ? '↓' : '↑'}
+                    </td>
+                    {weekDates.map((d) => {
+                      const dateStr = formatDateISO(d);
+                      const v = entries[m.id]?.[dateStr] ?? null;
+                      const met = isMet(m, v);
+                      const bgClass = met === null ? '' : met ? 'bg-green-50' : 'bg-red-50';
+                      return (
+                        <td key={dateStr} className="py-1 px-1">
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.1"
+                            value={v ?? ''}
+                            onChange={(e) => handleChange(m.id, dateStr, e.target.value)}
+                            className={`w-full text-center text-xs md:text-sm py-1 px-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 ${bgClass}`}
+                            placeholder="-"
+                          />
+                        </td>
+                      );
+                    })}
+                    <td className={`py-2 px-1 text-center text-xs md:text-sm font-medium ${
+                      avgMet === null ? 'text-gray-400' : avgMet ? 'text-green-700' : 'text-red-700'
+                    }`}>
+                      {avg === null ? '-' : avg.toFixed(m.target_value >= 1000 ? 0 : 1)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="mt-3 text-xs text-gray-400">
-        ● 표시 = 가중목 핵심 선행지표 / 입력하면 즉시 자동 저장됩니다
+        🎯 선행지표 / 📊 후행지표 — 입력하면 즉시 자동 저장됩니다
       </div>
     </main>
   );
