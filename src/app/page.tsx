@@ -4,16 +4,20 @@ import { useEffect, useState } from 'react';
 import { supabase, type Team, type Wig, type MetricDef, type DailyEntry } from '@/lib/supabase';
 import { getMonday, getWeekDates, formatDateISO } from '@/lib/date-utils';
 import { calculateTeamSummary, STATUS_COLORS, type TeamSummary } from '@/lib/stats';
+import { useAuth } from '@/lib/auth-context';
+import RequireAuth from '@/components/RequireAuth';
+import UserMenu from '@/components/UserMenu';
 import Link from 'next/link';
 
-export default function HomePage() {
+function HomePageContent() {
+  const { authUser } = useAuth();
   const [summaries, setSummaries] = useState<TeamSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (authUser) loadData();
+  }, [authUser]);
 
   async function loadData() {
     try {
@@ -85,10 +89,13 @@ export default function HomePage() {
 
   return (
     <main className="max-w-3xl mx-auto p-4 md:p-8">
-      <header className="mb-6 flex items-baseline justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="text-2xl font-medium text-gray-900">조인그룹 가중목 시스템</h1>
-          <p className="text-sm text-gray-500 mt-1">세양 안성공장 · 9개 팀</p>
+      <header className="mb-6">
+        <div className="flex items-baseline justify-between flex-wrap gap-2 mb-3">
+          <div>
+            <h1 className="text-2xl font-medium text-gray-900">조인그룹 가중목 시스템</h1>
+            <p className="text-sm text-gray-500 mt-1">세양 안성공장 · 9개 팀</p>
+          </div>
+          <UserMenu />
         </div>
         <div className="flex items-center gap-3 text-xs flex-wrap">
           <Link href="/factory" className="text-blue-600 hover:text-blue-800 font-medium">📊 공장 대시보드</Link>
@@ -170,8 +177,16 @@ export default function HomePage() {
       </section>
 
       <footer className="mt-12 text-center text-xs text-gray-400">
-        v0.4 · 2026.04 · Powered by Next.js + Supabase
+        v0.5 · 2026.04 · Powered by Next.js + Supabase
       </footer>
     </main>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <RequireAuth>
+      <HomePageContent />
+    </RequireAuth>
   );
 }
