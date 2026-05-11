@@ -63,11 +63,23 @@ export default function ManagePage() {
   function flashSaved() {
     setSaveStatus(`저장됨 ${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`);
     setTimeout(() => setSaveStatus(''), 3000);
-    loadData();
+    refreshLogs();
+  }
+
+  async function refreshLogs() {
+    if (!team) return;
+    const { data } = await supabase
+      .from('change_log')
+      .select('*')
+      .eq('team_id', team.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    setRecentLogs(data || []);
   }
 
   async function updateWig(field: keyof Wig, value: any) {
     if (!wig) return;
+    setWig({ ...wig, [field]: value });
     setSaveStatus('저장 중...');
     const { error } = await supabase.from('wig_master').update({ [field]: value }).eq('id', wig.id);
     if (error) setSaveStatus('⚠️ ' + error.message);
